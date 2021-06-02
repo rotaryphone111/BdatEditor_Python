@@ -20,7 +20,7 @@ def BdatEditor(file=None):
     if not file:
         file = FileOpenMenu()
     if file == '':
-        BdatEditor()
+        return 
 
     table_dicts = BdatReader.read_bdat_file(file)
     table_names = list(table_dicts.keys())
