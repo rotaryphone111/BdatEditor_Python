@@ -17,6 +17,8 @@ def FileOpenMenu():
 
 def BdatEditor(file=None):
     sg.theme('LightGrey1')
+    if file == '':
+        return 
     if not file:
         file = FileOpenMenu()
     if file == '':
@@ -61,12 +63,12 @@ def BdatEditor(file=None):
                 window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
             
             if event == 'Open File':
-                layout1 = [[sg.Text('Filename')], 
-                          [sg.Input(), sg.FileBrowse()],
-                          [sg.OK(), sg.Cancel()]]
-                event, values = sg.Window('Enter Bdat File', layout1).read(close=True)
-                file = values[0]
-                BdatEditor(file)
+                # layout1 = [[sg.Text('Filename')], 
+                #           [sg.Input(), sg.FileBrowse()],
+                #           [sg.OK(), sg.Cancel()]]
+                # event, values = sg.Window('Enter Bdat File', layout1).read(close=True)
+                # file = values[0]
+                BdatEditor()
                 window.close()
                 return
 
