@@ -136,6 +136,9 @@ def write_bdat(bdat, file):
             if len(table_buffer) % 4 != 0:
                 while len(table_buffer) % 4 != 0:
                     table_buffer = table_buffer.AppendUInt8(0)
+
+            bdat[key]['raw'] = table_buffer
+            bdat[key]['edited'] = False
         
         else:
             table_buffer = bdat[key]['raw']

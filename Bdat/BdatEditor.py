@@ -17,8 +17,6 @@ def FileOpenMenu():
 
 def BdatEditor(file=None):
     sg.theme('LightGrey1')
-    if file == '':
-        return 
     if not file:
         file = FileOpenMenu()
     if file == '':
@@ -28,8 +26,10 @@ def BdatEditor(file=None):
     table_names = list(table_dicts.keys())
     name_max_len = len(max(table_names, key=len))
     width, height = sg.Window.get_screen_dimensions(sg.Window)
-    # height -= sg.DEFAULT_BUTTON_ELEMENT_SIZE[1]
-    height = int(height/30) - 1
+    # size_table = (int(width - (name_max_len * 10) - 14), height - 25)
+    # size_px = (((name_max_len * 10) + 14), height)
+    height -= 27
+    height = int(height/37) - 2
     size = (name_max_len, height)
     layout = [[sg.Button('Open File')],
               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size)],
@@ -46,19 +46,40 @@ def BdatEditor(file=None):
                 key = values['name_list'][0]
                 table = BdatReader.read_raw_data(table_dicts[key])
                 t = table['data'].copy()
-                if isinstance(t, pd.Series):
-                    d = t.dtype
-                else:
-                    d = table['data'].dtypes.copy()
+                d = table['data'].dtypes.copy()
+                t_str = t.apply(stringify_column)
+
                 table_values = []
-                for i in t.index:
-                    table_values.append(t.iloc[i].apply(str).tolist())
+                for i in t_str.index:
+                    table_values.append(t_str.iloc[i].tolist())
+                    
+                cols = []
+                col_widths = []
+                for col in t.columns:
+                    if d[col] != object:
+                        name = str(col) + '\n' + '(' + str(d[col]) + ')'
+                    else:
+                        name = str(col) + '\n' + '(string)'
+                    cols.append(name)
+                    col_widths.append(len(name))
+                
+                # col_layout = [[sg.Button('Open File', size=(size[0], 1))], 
+                #               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=(size[0], size[1] - int((2*25)/25)))],
+                #               [sg.Button('Read Table', size=(int(size[0]/2), 1)), sg.Button('Save Table', size=(int(size[0]/2), 1))]]
+                # table_layout =  [[sg.Table(table_values, headings=cols, display_row_numbers=True, enable_events=True, key='table')],
+                #                 [sg.Button('Add Row'), sg.Button('Remove Rows'), sg.Button('Exit')]]
 
                 layout = [[sg.Button('Open File')],
-                            [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
-                           sg.Table(table_values, headings=list(t.columns), display_row_numbers=True, enable_events=True, key='table')],
-                          [sg.Button('Add Row'), sg.Button('Remove Rows'), sg.Button('Read Table'), sg.Button('Save Table'),
-                            sg.Button('Exit')]]
+                          [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
+                           sg.Table(table_values, headings=cols, auto_size_columns=False, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
+                          [sg.Button('Read Table'), sg.Button('Save Table'), sg.Button('Add Row'), sg.Button('Remove Rows'),
+                           sg.Button('Exit')]]
+
+                # layout = [[sg.Column(col_layout),
+                #            sg.Table(table_values, headings=list(t.columns), display_row_numbers=True, enable_events=True, key='table')],
+                #           [sg.Button('Add Row'), sg.Button('Remove Rows'),
+                #             sg.Button('Exit')]]
+                # layout = [[sg.Column(col_layout, size=size_px), sg.Column(table_layout, size=size_table)]]
                 window.close()
                 window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
             
@@ -68,12 +89,14 @@ def BdatEditor(file=None):
                 #           [sg.OK(), sg.Cancel()]]
                 # event, values = sg.Window('Enter Bdat File', layout1).read(close=True)
                 # file = values[0]
-                BdatEditor()
+                file = FileOpenMenu()
+                if file == '':
+                    continue
+                BdatEditor(file)
                 window.close()
                 return
 
             if event == 'Save Table':
-                i = 0
                 window.FindElement('table').Update(values= window.FindElement('table').get())
                 table_values = window.FindElement('table').Values
                 table_values_new = []
@@ -99,6 +122,7 @@ def BdatEditor(file=None):
                 table_dicts[key] = table
                 write_bdat(table_dicts, file)
 
+
             if event == 'Add Row':
                 window.FindElement('table').Update(values= window.FindElement('table').get())
                 new_row = []
@@ -119,10 +143,16 @@ def BdatEditor(file=None):
                         table_values.pop(i)
                     window.FindElement('table').Update(values=table_values)
 
+        except ValueError:
+            sg.popup('Invalid Value')
 
-        except:
-            break
+        # except:
+        #     break
 
 
     window.close()
+
+def stringify_column(col):
+    return col.apply(str)
+
 
