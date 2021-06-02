@@ -67,7 +67,8 @@ def BdatEditor(file=None):
                 event, values = sg.Window('Enter Bdat File', layout1).read(close=True)
                 file = values[0]
                 BdatEditor(file)
-                break
+                window.close()
+                return
 
             if event == 'Save Table':
                 i = 0
