@@ -36,7 +36,6 @@ def BdatEditor(file=None):
     while True:
         try:
             event, values = window.read()
-            print(event, values)
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
             if event == 'Read Table':
