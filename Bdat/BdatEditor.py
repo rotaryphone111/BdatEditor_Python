@@ -36,6 +36,7 @@ def BdatEditor(file=None):
     while True:
         try:
             event, values = window.read()
+            print(event, values)
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
             if event == 'Read Table':
@@ -55,7 +56,7 @@ def BdatEditor(file=None):
                 layout = [[sg.Button('Open File')],
                             [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
                            sg.Table(table_values, headings=list(t.columns), display_row_numbers=True, enable_events=True, key='table')],
-                          [sg.Button('Add Row'), sg.Button('Remove Row'), sg.Button('Read Table'), sg.Button('Save Table'),
+                          [sg.Button('Add Row'), sg.Button('Remove Rows'), sg.Button('Read Table'), sg.Button('Save Table'),
                             sg.Button('Exit')]]
                 window.close()
                 window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
@@ -107,11 +108,14 @@ def BdatEditor(file=None):
                 table['item_count'] += 1
 
 
-            if event == 'Remove Row':
-                window.FindElement('table').Update(values= window.FindElement('table').get())
-                table_values = window.FindElement('table').Values
-                table_values.pop()
-                window.FindElement('table').Update(values=table_values)
+            if event == 'Remove Rows':
+                if values['table'] != []:
+                    window.FindElement('table').Update(values= window.FindElement('table').get())
+                    table_values = window.FindElement('table').Values
+                    for i in sorted(values['table'], reverse=True):
+                        table_values.pop(i)
+                    window.FindElement('table').Update(values=table_values)
+
 
         except:
             break
@@ -119,8 +123,3 @@ def BdatEditor(file=None):
 
     window.close()
 
-
-
-    # window = sg.Window('Table Simulation', layout, font='Courier 12')
-    # event, values = window.read()
-    # window.close()

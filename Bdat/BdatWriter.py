@@ -189,9 +189,10 @@ def convert_table_strings(table, strings_offset, str_table):
     return(table1, strings_offset, str_table)
      
 
-def write_table_strings(string, str_table):
-    str_table.AppendBytes(string.encode('utf-8'))
-    str_table.AppendBytes(b'\x00')
+# def write_table_strings(string, str_table):
+#     str_table.AppendBytes(string.encode('utf-8'))
+#     str_table.AppendBytes(b'\x00')
+
             
 def combine_arrays(table):
     length = table.shape[0]
@@ -239,25 +240,26 @@ def write_table_items(table, item_table, item_size):
 
     return(item_table)
 
-def write_items(row, dtypes, item_table, item_size):
-    i = 0
-    for ix in row.index:
-        if dtypes[ix] != object:
-            item_table.WriteValue(i, row[ix], dtype=dtypes[ix], use_position=True)
-            i += dtypes[ix].itemsize
-        elif isinstance(row[ix], bytearray) or isinstance(row[ix], bytes):
-            step = len(row[ix])
-            item_table.WriteBytes(i, step, row[ix], use_position=True)
-            i += step
-        else:
-            print(row[ix])
+# def write_items(row, dtypes, item_table, item_size):
+#     i = 0
+#     for ix in row.index:
+#         if dtypes[ix] != object:
+#             item_table.WriteValue(i, row[ix], dtype=dtypes[ix], use_position=True)
+#             i += dtypes[ix].itemsize
+#         elif isinstance(row[ix], bytearray) or isinstance(row[ix], bytes):
+#             step = len(row[ix])
+#             item_table.WriteBytes(i, step, row[ix], use_position=True)
+#             i += step
+#         else:
+#             print(row[ix])
 
-    item_table.Position += item_size
-    return None
+#     item_table.Position += item_size
+#     return None
 
 def write_flag_col(flag_cols, masks, flag_name):
     flag_col = flag_cols.apply(write_flags, axis=1, mask_list=masks, name=flag_name)
     return flag_col
+
 
 def write_flags(flags, mask_list, name):
     flag = flags[name]
@@ -269,15 +271,15 @@ def write_flags(flags, mask_list, name):
     return flag
 
 
-def calculate_table_checksum(table):
-    checksum = 0
-    end = table.nbytes
-    i = 32
-    while i < end:
-        checksum += np.uint16(table[i] << (i & 3))
-        i += 1
+# def calculate_table_checksum(table):
+#     checksum = 0
+#     end = table.nbytes
+#     i = 32
+#     while i < end:
+#         checksum += np.uint16(table[i] << (i & 3))
+#         i += 1
 
-    return checksum
+#     return checksum
 
         
 
