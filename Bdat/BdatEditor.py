@@ -110,6 +110,7 @@ def BdatEditor(file=None):
 
             if event == 'Remove Rows':
                 if values['table'] != []:
+                    table['item_count'] -= len(values['table'])
                     window.FindElement('table').Update(values= window.FindElement('table').get())
                     table_values = window.FindElement('table').Values
                     for i in sorted(values['table'], reverse=True):
