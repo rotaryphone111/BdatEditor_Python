@@ -49,12 +49,20 @@ def BdatEditor(file=None):
                 d = table['data'].dtypes.copy()
                 t_str = t.apply(stringify_column)
 
+                id_num = []
+                for i in range(table['base_id'], table['base_id'] + table['item_count']):
+                    id_num.append(i)
                 table_values = []
                 for i in t_str.index:
-                    table_values.append(t_str.iloc[i].tolist())
+                    # table_values.append(t_str.iloc[i].tolist())
+                    table_values.append([str(id_num[i])] + t_str.iloc[i].tolist())
                     
+                table_values_orig = table_values.copy()
+
                 cols = []
                 col_widths = []
+                cols.append('orig_row_id')
+                col_widths.append(12)
                 for col in t.columns:
                     if d[col] != object:
                         name = str(col) + '\n' + '(' + str(d[col]) + ')'
@@ -63,13 +71,17 @@ def BdatEditor(file=None):
                     cols.append(name)
                     col_widths.append(len(name))
                 
+                undo_stack = []
+                redo_stack = []
+                
                 # col_layout = [[sg.Button('Open File', size=(size[0], 1))], 
                 #               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=(size[0], size[1] - int((2*25)/25)))],
                 #               [sg.Button('Read Table', size=(int(size[0]/2), 1)), sg.Button('Save Table', size=(int(size[0]/2), 1))]]
                 # table_layout =  [[sg.Table(table_values, headings=cols, display_row_numbers=True, enable_events=True, key='table')],
                 #                 [sg.Button('Add Row'), sg.Button('Remove Rows'), sg.Button('Exit')]]
 
-                layout = [[sg.Button('Open File')],
+                layout = [[sg.Button('Open File'), sg.Button('Undo Row Change'), sg.Button('Redo Row Change'), sg.Button('Reload Table')],
+                          [sg.Text(key, justification='right')],
                           [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
                            sg.Table(table_values, headings=cols, auto_size_columns=False, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
                           [sg.Button('Read Table'), sg.Button('Save Table'), sg.Button('Add Row'), sg.Button('Remove Rows'),
@@ -97,25 +109,25 @@ def BdatEditor(file=None):
                 return
 
             if event == 'Save Table':
-                window.FindElement('table').Update(values= window.FindElement('table').get())
+                window.FindElement('table').Update(values=window.FindElement('table').get())
                 table_values = window.FindElement('table').Values
                 table_values_new = []
                 for value in table_values:
+                    value.pop(0)
                     table_values_new.append(pd.Series(value, index=t.columns))
                 df = pd.DataFrame(table_values_new, columns=t.columns)
-                if isinstance(df, pd.Series):
-                    if d != object and d != bool:
-                        df = pd.to_numeric(df).astype(d)
-                    elif d == bool:
-                        df = (df == 'True')
-                else:
-                    for col in d.index:
-                        if d[col] != object and d[col] != bool:
-                            df[col] = pd.to_numeric(df[col])
-                        elif d[col] == bool:
-                            df[col] = (df[col] == 'True')
+                for col in d.index:
+                    if d[col] != object and d[col] != bool:
+                        df[col] = pd.to_numeric(df[col])
+                    elif d[col] == bool:
+                        invalid_values = df[col].str.match('true|false', case=False) == False
+                        if invalid_values.any():
+                            invalid_values = df[col].where(invalid_values).dropna()
+                            raise ValueError('invalid values: ' + str(invalid_values.tolist()))
+                        df[col] = df[col].str.match('true', case=False)
+                        # df[col] = (df[col] == 'True')
 
-                    df = df.astype(d)
+                df = df.astype(d)
                 
                 table['data'] = df
                 table['edited'] = True
@@ -124,9 +136,11 @@ def BdatEditor(file=None):
 
 
             if event == 'Add Row':
+                table_values = window.FindElement('table').Values
+                undo_stack.append(table_values.copy())
                 window.FindElement('table').Update(values= window.FindElement('table').get())
                 new_row = []
-                for col in t.columns:
+                for col in cols:
                     new_row.append('')
                 table_values = window.FindElement('table').Values
                 table_values.append(new_row)
@@ -139,14 +153,66 @@ def BdatEditor(file=None):
                     table['item_count'] -= len(values['table'])
                     window.FindElement('table').Update(values= window.FindElement('table').get())
                     table_values = window.FindElement('table').Values
+                    undo_stack.append(table_values.copy())
                     for i in sorted(values['table'], reverse=True):
                         table_values.pop(i)
                     window.FindElement('table').Update(values=table_values)
+            
+            if event == 'Undo Row Change':
+                if len(undo_stack) == 0:
+                    continue
+                else:
+                    table_values = window.FindElement('table').Values
+                    redo_stack.append(table_values.copy())
+                    table_values_undo = undo_stack.pop()
+                    item_diff = len(table_values) - len(table_values_undo)
+                    table['item_count'] -= item_diff
+                    window.FindElement('table').Update(values=table_values_undo)
+            
+            if event == 'Redo Row Change':
+                if len(redo_stack) == 0:
+                    continue
+                else:
+                    table_values = window.FindElement('table').Values
+                    undo_stack.append(table_values.copy())
+                    table_values_redo = redo_stack.pop()
+                    item_diff = len(table_values) - len(table_values_redo)
+                    table['item_count'] -= item_diff
+                    window.FindElement('table').Update(values=table_values_redo)
+            
+            if event == 'Reload Table':
+                undo_stack = []
+                redo_stack = []
+                window.FindElement('table').Update(values=table_values_orig)
 
-        except ValueError:
-            sg.popup('Invalid Value')
 
-        # except:
+        except ValueError as v:
+            sg.popup(v)
+
+        except IndexError as I:
+            if table_values == []:
+                id_num = []
+                for i in range(table['base_id'], table['base_id'] + table['item_count']):
+                    id_num.append(i)
+                table_values = []
+                for i in id_num:
+                    table_values.append([str(i)])
+
+                cols = ['orig_row_id']
+                col_widths = [12]
+                noted_key = key + ' (note: empty table)'
+
+                layout = [[sg.Button('Open File')],
+                          [sg.Text(noted_key, justification='right')],
+                          [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
+                           sg.Table(table_values, headings=cols, auto_size_columns=False, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
+                          [sg.Button('Read Table'), sg.Button('Exit')]]
+                window.close()
+                window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
+            else: 
+                sg.popup(i)
+                break
+                
         #     break
 
 

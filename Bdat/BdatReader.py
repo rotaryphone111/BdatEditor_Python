@@ -35,6 +35,7 @@ def construct_table_dicts(tables):
     for table in tables:
         table_dict = {}
         data = np.frombuffer(table, dtype=np.uint8).view(DataBuffer)
+        # data = decrypt_table(data)
 
         NamesOffset = data.ReadUInt16(6)
         name = data.ReadUTF8Z(NamesOffset)
@@ -271,6 +272,10 @@ def calc_data_types(table, memberTableOffset, memberCount):
 
     return (names, valtypes, offsets, string_members, flag_members, array_members, dup_names)
 
+
+# There's some C# weirdness that makes this work in XbTool that I haven't figured out yet, does not work as of right now.
+
+
 # def decrypt_bdat_file(file):
 #     table_count = file.ReadInt32(0)
 #
@@ -279,6 +284,46 @@ def calc_data_types(table, memberTableOffset, memberCount):
 #     while i < table_count:
 #         offset = file.ReadInt32(8 + 4 * i)
 #         table = file[offset:]
+#         decrypt_table(table)
+
+# def decrypt_table(table):
+#     if table.ReadUTF8(0,4) != 'BDAT':
+#         return
+#     if (table[4] & 2) == 0:
+#         return
+#     namesOffset = table.ReadUInt16(6)
+#     hashTableOffset = table.ReadUInt16(10)
+#     checksum = table.ReadUInt16(22)
+#     stringsOffset = table.ReadInt32(24)
+#     stringsLength = table.ReadInt32(28)
+#     table1 = table.copy()
+#     table1 = decrypt_section(table, checksum, namesOffset, hashTableOffset - namesOffset)
+#     table1 = decrypt_section(table, checksum, stringsOffset, stringsLength)
+#     return table1
+#
+# def decrypt_section(data, checksum, start, length):
+#     data1 = data.copy()
+#     end = start + length
+#     # keyA = np.array([~checksum >> 8], dtype=np.uint16).view(np.uint8)[0]
+#     # keyB = np.array([~checksum], dtype=np.uint16).view(np.uint8)[0];
+#     keyA = np.uint8(~checksum >> 8)
+#     keyB = np.uint8(~checksum)
+#     print(keyA, keyB)
+#     i = start
+#     while i < end:
+#         dataA = data1[i]
+#         dataB = data1[i + 1]
+#
+#         data1[i] ^= keyA
+#         data1[i + 1] ^= keyB
+#
+#         keyA += dataA
+#         keyB += dataB
+#
+#         i += 1
+#     print(data1.tobytes())
+#     return data1
+
 
 
 
