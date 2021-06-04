@@ -54,7 +54,6 @@ def BdatEditor(file=None):
                     id_num.append(i)
                 table_values = []
                 for i in t_str.index:
-                    # table_values.append(t_str.iloc[i].tolist())
                     table_values.append([str(id_num[i])] + t_str.iloc[i].tolist())
                     
                 table_values_orig = table_values.copy()
@@ -96,11 +95,6 @@ def BdatEditor(file=None):
                 window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
             
             if event == 'Open File':
-                # layout1 = [[sg.Text('Filename')], 
-                #           [sg.Input(), sg.FileBrowse()],
-                #           [sg.OK(), sg.Cancel()]]
-                # event, values = sg.Window('Enter Bdat File', layout1).read(close=True)
-                # file = values[0]
                 file = FileOpenMenu()
                 if file == '':
                     continue
@@ -125,7 +119,6 @@ def BdatEditor(file=None):
                             invalid_values = df[col].where(invalid_values).dropna()
                             raise ValueError('invalid values: ' + str(invalid_values.tolist()))
                         df[col] = df[col].str.match('true', case=False)
-                        # df[col] = (df[col] == 'True')
 
                 df = df.astype(d)
                 
@@ -213,9 +206,6 @@ def BdatEditor(file=None):
                 sg.popup(i)
                 break
                 
-        #     break
-
-
     window.close()
 
 def stringify_column(col):

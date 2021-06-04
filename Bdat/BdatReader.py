@@ -62,9 +62,6 @@ def read_raw_data(table_dict):
     Checksum = data.ReadUInt16(22)
     MemberTableOffset = data.ReadUInt16(32)
     MemberCount = data.ReadUInt16(34)
-
-    if MemberTableOffset > ItemTableOffset:
-        print('problem')
         
     members = calc_data_types(data, MemberTableOffset, MemberCount)
     names = members[0]
@@ -125,8 +122,9 @@ def read_raw_data(table_dict):
             flag_mask = flag_members[flag_name]['mask']
             flag_value = (chunk.ReadUInt8(flag_member_pos) & flag_mask != 0)
             flag_members[flag_name]['VarName'] = names[flag_members[flag_name]['VarIndex']]
+            flag_index = flag_members[flag_name]['VarIndex']
             l[flag_name] = flag_value
-
+        
         table_values.append(l)
     
     
@@ -192,14 +190,10 @@ def read_raw_data(table_dict):
     return table_dict
 
 
-def get_strings_from_columns(column, data_in): #, strs_len, strs_offset):
-    return column.apply(get_strings_from_offsets, data=data_in) #, strings_len=strs_len, strings_offset=strs_offset)
+def get_strings_from_columns(column, data_in): 
+    return column.apply(get_strings_from_offsets, data=data_in) 
 
-
-def get_strings_from_offsets(offset, data): #, strings_len, strings_offset):
-    # end = strings_offset + strings_len
-    # str_sec = data[offset:end]
-    # return(data.ReadUTF8Z(str_sec))
+def get_strings_from_offsets(offset, data): 
     return(data.ReadUTF8Z(offset))
 
 
