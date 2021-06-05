@@ -16,3 +16,7 @@ It's also extremely use at your own risk right now
 CAVEATS:
 
 - New rows *must* be filled completely right now. If they are not the bdat writer will throw an error.
+
+
+CHANGELOG:
+06/04/2021: Added full undo and redo features

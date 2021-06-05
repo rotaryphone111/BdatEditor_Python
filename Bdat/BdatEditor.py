@@ -1,7 +1,10 @@
 import PySimpleGUIQt as sg
+import pandas as pd
+import json
+import os.path
+
 from Bdat import BdatReader
 from Bdat.BdatWriter import write_bdat
-import pandas as pd
 
     
 
@@ -21,6 +24,12 @@ def BdatEditor(file=None):
         file = FileOpenMenu()
     if file == '':
         return 
+    backup_file = os.path.dirname(file) + '/.' + os.path.basename(file) + '.histfile'
+    if os.path.isfile(backup_file):
+        with open(backup_file, 'r') as b:
+            backup_dict = json.load(b)
+    else:
+        backup_dict = {}
 
     table_dicts = BdatReader.read_bdat_file(file)
     table_names = list(table_dicts.keys())
@@ -31,19 +40,32 @@ def BdatEditor(file=None):
     height -= 27
     height = int(height/37) - 2
     size = (name_max_len, height)
+
     layout = [[sg.Button('Open File')],
               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size)],
               [sg.Button('Read Table'), sg.Button('Exit')]]
     window = sg.Window('Bdat Editor', layout)
+
     while True:
         try:
             event, values = window.read()
+            print(event, values)
             if event == sg.WIN_CLOSED or event == 'Exit':
                 break
+
             if event == 'Read Table':
                 if values['name_list'] == []:
                     continue
                 key = values['name_list'][0]
+
+                try:
+                    backup_dict_table = backup_dict[key]
+                    undo_stack = backup_dict_table['undo'] 
+                    redo_stack = backup_dict_table['redo']
+                except NameError:
+                    undo_stack = []
+                    redo_stack = []
+
                 table = BdatReader.read_raw_data(table_dicts[key])
                 t = table['data'].copy()
                 d = table['data'].dtypes.copy()
@@ -70,8 +92,6 @@ def BdatEditor(file=None):
                     cols.append(name)
                     col_widths.append(len(name))
                 
-                undo_stack = []
-                redo_stack = []
                 
                 # col_layout = [[sg.Button('Open File', size=(size[0], 1))], 
                 #               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=(size[0], size[1] - int((2*25)/25)))],
@@ -79,10 +99,10 @@ def BdatEditor(file=None):
                 # table_layout =  [[sg.Table(table_values, headings=cols, display_row_numbers=True, enable_events=True, key='table')],
                 #                 [sg.Button('Add Row'), sg.Button('Remove Rows'), sg.Button('Exit')]]
 
-                layout = [[sg.Button('Open File'), sg.Button('Undo Row Change'), sg.Button('Redo Row Change'), sg.Button('Reload Table')],
+                layout = [[sg.Button('Open File'), sg.Button('Undo Change'), sg.Button('Redo Change'), sg.Button('Restore Initial Table')],
                           [sg.Text(key, justification='right')],
                           [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
-                           sg.Table(table_values, headings=cols, auto_size_columns=False, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
+                           sg.Table(table_values, headings=cols, auto_size_columns=False, bind_return_key=True, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
                           [sg.Button('Read Table'), sg.Button('Save Table'), sg.Button('Add Row'), sg.Button('Remove Rows'),
                            sg.Button('Exit')]]
 
@@ -103,6 +123,7 @@ def BdatEditor(file=None):
                 return
 
             if event == 'Save Table':
+                undo_stack.append(table_values.copy())
                 window.FindElement('table').Update(values=window.FindElement('table').get())
                 table_values = window.FindElement('table').Values
                 table_values_new = []
@@ -127,15 +148,21 @@ def BdatEditor(file=None):
                 table_dicts[key] = table
                 write_bdat(table_dicts, file)
 
+                backup_dict_table = {}
+                backup_dict_table['undo'] = undo_stack
+                backup_dict_table['redo'] = redo_stack
+                backup_dict[key] = backup_dict_table
+                with open(backup_file, 'w') as b:
+                    json.dump(backup_dict, b)
+
 
             if event == 'Add Row':
                 table_values = window.FindElement('table').Values
                 undo_stack.append(table_values.copy())
-                window.FindElement('table').Update(values= window.FindElement('table').get())
+                window.FindElement('table').Update(values=table_values)
                 new_row = []
                 for col in cols:
                     new_row.append('')
-                table_values = window.FindElement('table').Values
                 table_values.append(new_row)
                 window.FindElement('table').Update(values=table_values)
                 table['item_count'] += 1
@@ -144,43 +171,51 @@ def BdatEditor(file=None):
             if event == 'Remove Rows':
                 if values['table'] != []:
                     table['item_count'] -= len(values['table'])
-                    window.FindElement('table').Update(values= window.FindElement('table').get())
                     table_values = window.FindElement('table').Values
+                    window.FindElement('table').Update(values=table_values)
                     undo_stack.append(table_values.copy())
                     for i in sorted(values['table'], reverse=True):
                         table_values.pop(i)
                     window.FindElement('table').Update(values=table_values)
             
-            if event == 'Undo Row Change':
+            if event == 'Undo Change':
                 if len(undo_stack) == 0:
                     continue
                 else:
-                    table_values = window.FindElement('table').Values
+                    table_values = window.FindElement('table').get()
                     redo_stack.append(table_values.copy())
                     table_values_undo = undo_stack.pop()
                     item_diff = len(table_values) - len(table_values_undo)
                     table['item_count'] -= item_diff
                     window.FindElement('table').Update(values=table_values_undo)
             
-            if event == 'Redo Row Change':
+            if event == 'Redo Change':
                 if len(redo_stack) == 0:
                     continue
                 else:
-                    table_values = window.FindElement('table').Values
+                    table_values = window.FindElement('table').get()
                     undo_stack.append(table_values.copy())
                     table_values_redo = redo_stack.pop()
                     item_diff = len(table_values) - len(table_values_redo)
                     table['item_count'] -= item_diff
                     window.FindElement('table').Update(values=table_values_redo)
             
-            if event == 'Reload Table':
-                undo_stack = []
-                redo_stack = []
+            if event == 'Restore Initial Table':
+                table_values = window.FindElement('table').get()
+                undo_stack.append(table_values)
                 window.FindElement('table').Update(values=table_values_orig)
-
+                
+            if event == 'table':
+                if table_values == window.FindElement('table').get():
+                    continue
+                else:
+                    undo_stack.append(table_values.copy())
+                    table_values = window.FindElement('table').get()
+                    window.FindElement('table').Update(values=table_values)
+            
 
         except ValueError as v:
-            sg.popup(v)
+            sg.popup('Invalid Value Error: ' + str(v))
 
         except IndexError as I:
             if table_values == []:
@@ -203,7 +238,7 @@ def BdatEditor(file=None):
                 window.close()
                 window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
             else: 
-                sg.popup(i)
+                sg.popup(I)
                 break
                 
     window.close()
