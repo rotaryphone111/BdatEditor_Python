@@ -231,7 +231,7 @@ def write_table_items(table, item_table, item_size):
             else:
                 print(table[col].iloc[i])
         
-        if j < (i + 1) * item_size:
+        if j < (i + 1) * item_size: #item sizes must be a multiple of 4, some items are padded with zeros to achieve this
             j = (i + 1) * item_size
 
         i += 1

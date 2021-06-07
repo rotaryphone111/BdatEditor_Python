@@ -1,17 +1,20 @@
 # BdatEditor-Python
 Bdat Editor Python Rewrite
 
-Dependencies:
+This program currently only works for XC2. In theory it should work for XC1DE but no testing has been done for this.
+As should be evident by the release numbers, this package is currently in alpha and should therefore be used at your own risk.
 
-pandas
-numpy
-PySimpleGUIQt
 
-setup script for these will come later since I'm bad
+INSTALLATION:
+Run either:
 
-this program currently only works for XC2
+    python setup.py (OSX/Linux)
+    py setup.py(Windows)
 
-It's also extremely use at your own risk right now
+or 
+    pip install . (OSX/Linux)
+    python -m pip install . (Windows)
+
 
 CAVEATS:
 
@@ -19,4 +22,5 @@ CAVEATS:
 
 
 CHANGELOG:
+06/07/2021: Finally added setup scripts
 06/04/2021: Added full undo and redo features

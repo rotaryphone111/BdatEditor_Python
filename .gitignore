@@ -3,3 +3,6 @@
 .pydevproject
 .settings/
 **/*.bdat*
+**/*.egg-info
+build
+dist
