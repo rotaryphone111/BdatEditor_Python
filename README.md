@@ -12,6 +12,7 @@ Run either:
     py setup.py(Windows)
 
 or 
+
     pip install . (OSX/Linux)
     python -m pip install . (Windows)
 
