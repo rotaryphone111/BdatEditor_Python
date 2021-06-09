@@ -10,7 +10,7 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'bdateditor=run:main',
+            'bdateditor=Bdat:main',
         ]
     },
     install_requires=[
