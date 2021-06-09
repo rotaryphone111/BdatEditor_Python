@@ -24,6 +24,8 @@ CAVEATS:
 
 CHANGELOG:
 
+06/09/2021: Fixed issues with the executable
+
 06/09/2021: Crash bugfix
 
 06/07/2021: Finally added setup scripts
