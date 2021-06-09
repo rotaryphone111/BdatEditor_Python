@@ -49,8 +49,8 @@ def BdatEditor(file=None):
     while True:
         try:
             event, values = window.read()
-            print(event, values)
             if event == sg.WIN_CLOSED or event == 'Exit':
+                
                 break
 
             if event == 'Read Table':
@@ -62,7 +62,7 @@ def BdatEditor(file=None):
                     backup_dict_table = backup_dict[key]
                     undo_stack = backup_dict_table['undo'] 
                     redo_stack = backup_dict_table['redo']
-                except NameError:
+                except (NameError, KeyError):
                     undo_stack = []
                     redo_stack = []
 
