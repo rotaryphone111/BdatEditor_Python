@@ -24,6 +24,8 @@ CAVEATS:
 
 CHANGELOG:
 
+06/10/2021: Fixed an oopsies inherited from old BdatEditors to do with flags
+
 06/09/2021: Fixed issues with the executable
 
 06/09/2021: Crash bugfix

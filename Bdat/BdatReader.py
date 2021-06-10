@@ -119,10 +119,11 @@ def read_raw_data(table_dict):
 
         for flag_name in flag_members.keys():
             flag_member_pos = flag_members[flag_name]['VarPos']
-            flag_mask = flag_members[flag_name]['mask']
-            flag_value = (chunk.ReadUInt8(flag_member_pos) & flag_mask != 0)
-            flag_members[flag_name]['VarName'] = names[flag_members[flag_name]['VarIndex']]
             flag_index = flag_members[flag_name]['VarIndex']
+            flag_mask = flag_members[flag_name]['mask']
+            flag_member_type = types[flag_index]
+            flag_value = (chunk.ReadValue(flag_member_pos, flag_member_type) & flag_mask != 0)
+            flag_members[flag_name]['VarName'] = names[flag_members[flag_name]['VarIndex']]
             l[flag_name] = flag_value
         
         table_values.append(l)

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='BdatEditor',
-    version='0.0.2a',
+    version='0.0.3a',
     description='Bdat editor python rewrite',
     author='hydra',
     author_email='knjtkshm@gmail.com',
