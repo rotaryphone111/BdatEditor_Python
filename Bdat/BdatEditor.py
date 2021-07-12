@@ -2,6 +2,7 @@ import PySimpleGUIQt as sg
 import pandas as pd
 import json
 import os.path
+from ast import literal_eval
 
 from Bdat import BdatReader
 from Bdat.BdatWriter import write_bdat
@@ -40,6 +41,7 @@ def BdatEditor(file=None):
     height -= 27
     height = int(height/37) - 2
     size = (name_max_len, height)
+    ctrl_flag = False
 
     layout = [[sg.Button('Open File')],
               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size)],
@@ -103,6 +105,7 @@ def BdatEditor(file=None):
                           [sg.Text(key, justification='right')],
                           [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
                            sg.Table(table_values, headings=cols, auto_size_columns=False, bind_return_key=True, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
+                          [sg.Checkbox('Display Control Characters', enable_events=True, key='ctrl')],
                           [sg.Button('Read Table'), sg.Button('Save Table'), sg.Button('Add Row'), sg.Button('Remove Rows'),
                            sg.Button('Exit')]]
 
@@ -126,6 +129,16 @@ def BdatEditor(file=None):
                 undo_stack.append(table_values.copy())
                 window.FindElement('table').Update(values=window.FindElement('table').get())
                 table_values = window.FindElement('table').Values
+
+                if ctrl_flag:
+                    table_values_ctrl = []
+                    for a in table_values:
+                        b = []
+                        for i in a:
+                            b.append(literal_eval(i))
+                        table_values_ctrl.append(b)
+                    table_values = table_values_ctrl
+
                 table_values_new = []
                 for value in table_values:
                     value.pop(0)
@@ -154,7 +167,10 @@ def BdatEditor(file=None):
                 backup_dict[key] = backup_dict_table
                 with open(backup_file, 'w') as b:
                     json.dump(backup_dict, b)
-
+                
+                if ctrl_flag:
+                    table_values = window.FindElement('table').get()
+                    window.FindElement('table').Update(values=table_values)
 
             if event == 'Add Row':
                 table_values = window.FindElement('table').Values
@@ -212,6 +228,28 @@ def BdatEditor(file=None):
                     undo_stack.append(table_values.copy())
                     table_values = window.FindElement('table').get()
                     window.FindElement('table').Update(values=table_values)
+                    
+            if event == 'ctrl':
+                table_values = window.FindElement('table').get()
+                table_values_ctrl = []
+                if values['ctrl']:
+                    for a in table_values:
+                        b = []
+                        for i in a:
+                            b.append(repr(str(i)))
+                        table_values_ctrl.append(b)
+                    ctrl_flag = True
+
+                elif ctrl_flag:
+                    for a in table_values:
+                        b = []
+                        for i in a:
+                            b.append(literal_eval(i))
+                        table_values_ctrl.append(b)
+                    ctrl_flag = False
+                    
+
+                window.FindElement('table').Update(values=table_values_ctrl)
             
 
         except ValueError as v:
@@ -234,12 +272,16 @@ def BdatEditor(file=None):
                           [sg.Text(noted_key, justification='right')],
                           [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
                            sg.Table(table_values, headings=cols, auto_size_columns=False, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
+                          [sg.Checkbox('Display Control Characters', enable_events=True, key='ctrl')],
                           [sg.Button('Read Table'), sg.Button('Exit')]]
                 window.close()
                 window = sg.Window('Bdat Editor', layout, size=sg.Window.get_screen_dimensions(sg.Window))
             else: 
                 sg.popup(I)
                 break
+        except SyntaxError as S:
+            sg.popup(S)
+
                 
     window.close()
 

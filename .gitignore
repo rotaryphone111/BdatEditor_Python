@@ -4,5 +4,7 @@
 .settings/
 **/*.bdat*
 **/*.egg-info
+**/*.lvb*
 build
 dist
+Lvb

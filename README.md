@@ -24,6 +24,8 @@ CAVEATS:
 
 CHANGELOG:
 
+07/12/2021: Due to cross platform issues, I have added a tick box to display control characters. Saving while this is active is somewhat finnicky. Generally use at your own risk right now. Backup your stuff.
+
 06/10/2021: Fixed an oopsies inherited from old BdatEditors to do with flags
 
 06/09/2021: Fixed issues with the executable

@@ -13,7 +13,7 @@ class DataBuffer(np.ndarray):
     '''
     
     def __new__(cls, input_array, start = 0, length=False):
-        obj = np.asarray(input_array, offset=start).view(cls)
+        obj = np.asarray(input_array).view(cls)
         obj.Position = start
         if not length:
             obj.Length = input_array.nbytes - start
@@ -24,8 +24,13 @@ class DataBuffer(np.ndarray):
     def __array_finalize__(self, obj):
         self.Position = 0
     
-    def ReadValue(self, index, Dtype):
-        return self[index: int(index + Dtype(1).itemsize)].view(Dtype)[0]
+    def ReadValue(self, index = 0, Dtype=np.uint8, use_position = False):
+        if not use_position:
+            return self[index: int(index + Dtype(1).itemsize)].view(Dtype)[0]
+        else:
+            value = self[self.Position + index: int(self.Position + index + Dtype(1).itemsize)].view(Dtype)[0]
+            self.Position += Dtype(1).itemsize
+            return value
 
     def ReadUInt8(self, index):
         result = self.view(np.uint8)[index]
@@ -63,12 +68,19 @@ class DataBuffer(np.ndarray):
         result = self.view(np.float32)[int(index/4)]
         return result
     
-    def ReadUTF8(self, index, length):
-        result = self[index:length].tobytes().decode()
+    def ReadUTF8(self, index, length, use_position=False):
+        if not use_position:
+            result = self[index: index + length].tobytes().decode()
+        else:
+            result = self[self.Position: self.Position + length].tobytes().decode()
+            self.Position += length
         return result
     
-    def ReadUTF8Z(self, index):
-        result = self[index:].tobytes().split(sep=b'\x00')[0].decode()
+    def ReadUTF8Z(self, index, use_position = False):
+        if not use_position:
+            result = self[index:].tobytes().split(sep=b'\x00')[0].decode()
+        else:
+            result = self[self.Position + index:].tobytes().split(sep=b'\x00')[0].decode()
         return result
 
     def ReadBytes(self, index, length):
