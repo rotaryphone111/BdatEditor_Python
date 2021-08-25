@@ -42,6 +42,8 @@ def BdatEditor(file=None):
     height = int(height/37) - 2
     size = (name_max_len, height)
     ctrl_flag = False
+    
+    clipboard = []
 
     layout = [[sg.Button('Open File')],
               [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size)],
@@ -51,6 +53,7 @@ def BdatEditor(file=None):
     while True:
         try:
             event, values = window.read()
+
             if event == sg.WIN_CLOSED or event == 'Exit':
                 
                 break
@@ -67,6 +70,7 @@ def BdatEditor(file=None):
                 except (NameError, KeyError):
                     undo_stack = []
                     redo_stack = []
+                clipboard = []
 
                 table = BdatReader.read_raw_data(table_dicts[key])
                 t = table['data'].copy()
@@ -106,8 +110,8 @@ def BdatEditor(file=None):
                           [sg.Listbox(values=table_names, select_mode=sg.LISTBOX_SELECT_MODE_SINGLE, key='name_list', size=size),
                            sg.Table(table_values, headings=cols, auto_size_columns=False, bind_return_key=True, col_widths=col_widths, display_row_numbers=True, enable_events=True, key='table')],
                           [sg.Checkbox('Display Control Characters', enable_events=True, key='ctrl')],
-                          [sg.Button('Read Table'), sg.Button('Save Table'), sg.Button('Add Row'), sg.Button('Remove Rows'),
-                           sg.Button('Exit')]]
+                          [sg.Button('Read Table'), sg.Button('Save Table'), sg.Button('Add Row'), sg.Button('Remove Rows'), 
+                           sg.Button('Copy Rows'), sg.Button('Paste Rows'), sg.Button('Exit')]]
 
                 # layout = [[sg.Column(col_layout),
                 #            sg.Table(table_values, headings=list(t.columns), display_row_numbers=True, enable_events=True, key='table')],
@@ -193,6 +197,22 @@ def BdatEditor(file=None):
                     for i in sorted(values['table'], reverse=True):
                         table_values.pop(i)
                     window.FindElement('table').Update(values=table_values)
+            
+            if event == 'Copy Rows':
+                if values['table'] != []:
+                    table_values = window.FindElement('table').Values
+                    clipboard = [table_values[i] for i in values['table']]
+            
+            if event == 'Paste Rows':
+                if clipboard != []:
+                    table_values = window.FindElement('table').Values
+                    undo_stack.append(table_values.copy())
+                    window.FindElement('table').Update(values=table_values)
+                    for new_row in clipboard:
+                        table_values.append(new_row)
+                    window.FindElement('table').Update(values=table_values)
+                    table['item_count'] += len(clipboard)
+                    clipboard = []
             
             if event == 'Undo Change':
                 if len(undo_stack) == 0:

@@ -24,6 +24,8 @@ CAVEATS:
 
 CHANGELOG:
 
+08/24/2021: As per a request, I have added a copy-paste function. Currently you can only paste to the end of the table, to avoid interfering with IDs.
+
 07/12/2021: Due to cross platform issues, I have added a tick box to display control characters. Saving while this is active is somewhat finnicky. Generally use at your own risk right now. Backup your stuff.
 
 06/10/2021: Fixed an oopsies inherited from old BdatEditors to do with flags
