@@ -1,4 +1,4 @@
-from Bdat import BdatEditor
+from BdatEdit import BdatEditor
 
 def main():
     BdatEditor.BdatEditor()

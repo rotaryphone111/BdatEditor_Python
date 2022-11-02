@@ -8,3 +8,6 @@
 build
 dist
 Lvb
+X
+wheelhouse
+__pycache__

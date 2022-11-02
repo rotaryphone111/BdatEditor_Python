@@ -1,7 +1,7 @@
 # BdatEditor-Python
 Bdat Editor Python Rewrite
 
-This program currently only works for XC2. In theory it should work for XC1DE but no testing has been done for this.
+This program currently has only been tested for XC2. In theory it should work for XC1DE, XCX, and XC1 but no testing has been done for this.
 As should be evident by the release numbers, this package is currently in alpha and should therefore be used at your own risk.
 
 
@@ -21,8 +21,13 @@ CAVEATS:
 
 - New rows *must* be filled completely right now. If they are not the bdat writer will throw an error.
 
+- Xenoblade X handles floats extremely strangely. If precision is a priority make sure your floating point 
+  numbers work out to integer values when multiplied by 4096.
+
 
 CHANGELOG:
+
+11/02/2022: Support has been added for Xenoblade X and Xenoblade Chronicles 1, along with some bugfixes.
 
 09/21/2021: I have cythonized the IO code to increase read and write speeds. 
 

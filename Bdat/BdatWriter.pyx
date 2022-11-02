@@ -9,8 +9,8 @@ import numpy as np
 from Common.DataBuffer import DataBuffer
 
 
-def write_bdat(bdat, file):
-    buffer = np.array([], dtype=np.uint8).view(DataBuffer)
+def write_bdat(bdat, file, game):
+    buffer = DataBuffer(np.array([], dtype=np.uint8), game)
 
     table_count = len(bdat.keys())
     buffer = buffer.AppendValue(table_count, np.int32)
@@ -24,7 +24,7 @@ def write_bdat(bdat, file):
     
     for key in bdat.keys():
         if bdat[key]['edited']:
-            table_buffer = np.array([66, 68, 65, 84], dtype=np.uint8).view(DataBuffer) #BDAT 
+            table_buffer = DataBuffer(np.array([66, 68, 65, 84], dtype=np.uint8), game) #BDAT 
             
             header = np.frombuffer(bdat[key]['header'], dtype=np.uint8)
             names_offset = bdat[key]['names_offset']
@@ -38,10 +38,9 @@ def write_bdat(bdat, file):
             checksum = bdat[key]['checksum']
             member_offset = bdat[key]['member_offset']
             member_count = bdat[key]['member_count']
-
+            
             data = bdat[key]['data'].copy()
             item_count = data.shape[0]
-
 
             table_buffer = table_buffer.AppendValue(encryption_flag, np.uint16)
             table_buffer = table_buffer.AppendValue(names_offset, np.uint16)
@@ -52,7 +51,6 @@ def write_bdat(bdat, file):
             table_buffer = table_buffer.AppendValue(item_count, np.uint16)
             table_buffer = table_buffer.AppendValue(base_id, np.uint16)
             table_buffer = table_buffer.AppendValue(field_14, np.uint16)
-             
             
             item_offset = item_table_offset
             items_length = int(item_count * item_size)
@@ -60,19 +58,18 @@ def write_bdat(bdat, file):
             strings_offset = np.int32(item_offset + items_length)
             str_offset = strings_offset.copy()
             
-            string_table = np.array([], dtype=np.uint8).view(DataBuffer)
-            item_table = np.zeros((item_count * item_size,), dtype=np.uint8).view(DataBuffer)
+            string_table = DataBuffer(np.array([], dtype=np.uint8), game)
+            item_table = DataBuffer(np.zeros((item_count * item_size,), dtype=np.uint8), game)
             
             names = bdat[key]['item_names'].copy()
             strings = bdat[key]['strings'].copy()
-            
 
             for array in bdat[key]['arrays'].keys():
                 cols = []
                 for new_arr in bdat[key]['arrays'][array].keys():
                     cols.append(new_arr)
 
-                reduced_array = combine_arrays(data[cols])
+                reduced_array = combine_arrays(data[cols], game)
                 reduced_array.name = array
                 data.drop(cols, axis=1, inplace=True)
                 data = pd.concat((data, reduced_array), axis=1)
@@ -87,7 +84,7 @@ def write_bdat(bdat, file):
                 str_offset = strs_tup[1]
                 string_table = strs_tup[2]
 
-                reduced_array = combine_arrays(data[cols])
+                reduced_array = combine_arrays(data[cols], game)
                 strings.remove(array)
                 
                 reduced_array.name = array
@@ -111,14 +108,12 @@ def write_bdat(bdat, file):
                 data.drop(cols, axis=1, inplace=True)
                 
             data = data.reindex(columns=names)
-
             
             if strings != []:
                 strs_tup = convert_table_strings(data[strings], str_offset, string_table)
                 data[strings] = strs_tup[0]
                 str_offset = strs_tup[1]
                 string_table = strs_tup[2]
-            
             
             strings_length = str_offset - strings_offset
             table_buffer = table_buffer.AppendValue(checksum, np.uint16)
@@ -128,11 +123,10 @@ def write_bdat(bdat, file):
             table_buffer = table_buffer.AppendValue(member_count, np.uint16)
 
             item_table = write_table_items(data, item_table, item_size)
-
             
-            table_buffer = np.append(table_buffer, header).view(DataBuffer)
-            table_buffer = np.append(table_buffer, item_table).view(DataBuffer)
-            table_buffer = np.append(table_buffer, string_table).view(DataBuffer)
+            table_buffer = DataBuffer(np.append(table_buffer, header), game)
+            table_buffer = DataBuffer(np.append(table_buffer, item_table), game)
+            table_buffer = DataBuffer(np.append(table_buffer, string_table), game)
             if len(table_buffer) % 4 != 0:
                 while len(table_buffer) % 4 != 0:
                     table_buffer = table_buffer.AppendUInt8(0)
@@ -192,13 +186,13 @@ def convert_table_strings(table, strings_offset, str_table):
     return(table1, strings_offset, str_table)
      
             
-def combine_arrays(table):
+def combine_arrays(table, game):
     length = table.shape[0]
     a = []
     i = 0 
 
     while i < length: 
-        b = np.array([], dtype=np.uint8).view(DataBuffer)
+        b = DataBuffer(np.array([], dtype=np.uint8), game)
         
         for col in table.columns:
             if table[col].dtype != object:
@@ -214,9 +208,9 @@ def combine_arrays(table):
 
 def write_table_items(table, item_table, item_size):
     length = table.shape[0]
-
     i = 0 
     j = 0
+
     while i < length:
         for col in table.columns:
             if table[col].dtype != object:

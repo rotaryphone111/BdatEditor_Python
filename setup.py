@@ -17,7 +17,7 @@ if USE_CYTHON:
 
 setup(
     name='BdatEditor',
-    version='0.0.4a',
+    version='0.0.5a0',
     description='Bdat editor python rewrite',
     author='hydra',
     author_email='knjtkshm@gmail.com',
@@ -26,7 +26,7 @@ setup(
     ext_modules=extensions,
     entry_points={
         'console_scripts': [
-            'bdateditor=Bdat:main',
+            'bdateditor=BdatEdit:main',
         ]
     },
     install_requires=[

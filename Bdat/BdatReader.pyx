@@ -5,14 +5,13 @@ import pandas as pd
 from Common.DataBuffer import DataBuffer
 
 
-def read_bdat_file(file):
-    bdat = open_bdat_file(file)
+def read_bdat_file(file, game):
+    bdat = open_bdat_file(file, game)
     tables = split_bdat_file(bdat)
-    return construct_table_dicts(tables)
+    return construct_table_dicts(tables, game)
 
-def open_bdat_file(file):
-    return np.fromfile(file, dtype=np.uint8).view(DataBuffer)
-
+def open_bdat_file(file, game):
+    return DataBuffer(np.fromfile(file, dtype=np.uint8), game)
 
 def split_bdat_file(file):
     table_count = file.ReadInt32(0)
@@ -29,12 +28,12 @@ def split_bdat_file(file):
     return tables
 
 
-def construct_table_dicts(tables):
+def construct_table_dicts(tables, game):
     table_dicts = {}
 
     for table in tables:
         table_dict = {}
-        data = np.frombuffer(table, dtype=np.uint8).view(DataBuffer)
+        data = DataBuffer(np.frombuffer(table, dtype=np.uint8), game)
         if (data[4] & 2) != 0:
             data = decrypt_table(data)
 
@@ -127,7 +126,6 @@ def read_raw_data(table_dict):
             l[flag_name] = flag_value
         
         table_values.append(l)
-    
     
     typedict = {}
     i = 0
@@ -267,7 +265,6 @@ def calc_data_types(table, memberTableOffset, memberCount):
         i += 1
 
     return (names, valtypes, offsets, string_members, flag_members, array_members, dup_names)
-
 
 
 def decrypt_table(table):
