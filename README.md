@@ -8,8 +8,8 @@ As should be evident by the release numbers, this package is currently in alpha 
 INSTALLATION:
 Run either:
 
-    python setup.py (OSX/Linux)
-    py setup.py(Windows)
+    python setup.py install (OSX/Linux)
+    py setup.py install (Windows)
 
 or 
 
