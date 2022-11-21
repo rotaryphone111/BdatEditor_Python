@@ -27,6 +27,8 @@ CAVEATS:
 
 CHANGELOG:
 
+11/20/2022: adding in files I forgot like a moron
+
 11/02/2022: Support has been added for Xenoblade X and Xenoblade Chronicles 1, along with some bugfixes.
 
 09/21/2021: I have cythonized the IO code to increase read and write speeds. 

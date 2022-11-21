@@ -17,7 +17,7 @@ if USE_CYTHON:
 
 setup(
     name='BdatEditor',
-    version='0.0.5a0',
+    version='0.0.5a1',
     description='Bdat editor python rewrite',
     author='hydra',
     author_email='knjtkshm@gmail.com',
